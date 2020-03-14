@@ -30,10 +30,6 @@ class EditFragment : Fragment() {
     private val sharedViewModel: SharedViewModel by activityViewModels()
     private val db = BooksDB.booksdb!!
 
-//    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-//        return inflater.inflate(R.layout.fragment_edit, container, false)
-//    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -71,8 +67,13 @@ class EditFragment : Fragment() {
             addBookFragment.show(fragmentManager!!, "addbook")
         }
 
+        var list = listOf<Book>()
+
         sharedViewModel.booksFromCategory.observe(this, androidx.lifecycle.Observer {
             itemAdapter.addList(it ?: emptyList())
+            obecnieCzytana.text = "Obecnie czytana: " + it[0].title
+            nastepnieCzytana.text = "Nastepna czytana: " + it[1].title
+            list = it
         })
 
         searchBook.addTextChangedListener(object : TextWatcher{
@@ -84,6 +85,15 @@ class EditFragment : Fragment() {
 
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 updateRecyclerView(p0.toString())
+                if(p0.toString().isNotEmpty()){
+                    obecnieCzytana.visibility = View.INVISIBLE
+                    nastepnieCzytana.visibility = View.INVISIBLE
+                } else {
+                    obecnieCzytana.visibility = View.VISIBLE
+                    nastepnieCzytana.visibility = View.VISIBLE
+                    obecnieCzytana.text = "Obecnie czytana: " + itemAdapter.items[0].title
+                    nastepnieCzytana.text = "Nastepnie czytana: " + itemAdapter.items[1].title
+                }
             }
 
         })
@@ -99,7 +109,8 @@ class EditFragment : Fragment() {
                 val list = itemAdapter.items
                 Collections.swap(list, fromPos, toPos)
                 itemAdapter.notifyItemMoved(fromPos, toPos)
-                itemAdapter.notifyDataSetChanged()
+                obecnieCzytana.text = "Obecnie czytana: " + list[0]?.title
+                nastepnieCzytana.text = "Nastepna czytana: " + list[1].title
                 //w przypadku lagow w przesuwanie itemow bedzie trzeba usunac notify data set changed (prawdopodobnie jest to tym spowodowane)
                 //gdy to usuniemy itemy powinny lepiej sie przesuwac jednak tracimy update kolejnosci za kazdym przesunieciem
                 return true
@@ -116,7 +127,7 @@ class EditFragment : Fragment() {
         val books = sharedViewModel.booksFromCategory.value ?: emptyList()
         if(value.isNotEmpty()) {
             val a = books.filter {
-                it.title.contains(value)
+                it.title.contains(value.toLowerCase())
             }
             itemAdapter.addList(a)
         } else {

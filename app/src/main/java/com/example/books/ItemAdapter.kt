@@ -37,16 +37,6 @@ class ItemAdapter(val onDeleteClick: (Book)->Unit) : RecyclerView.Adapter<ItemAd
             view.deleteItem.setOnClickListener {
                 onDeleteClick(book)
             }
-            view.itemNumber.text = "$position."
-            if(position == 1) {
-                view.label.text = "Obecnie czytana"
-                view.label.visibility = View.VISIBLE
-            } else if (position == 2) {
-                view.label.text = "Kolejna czytana"
-                view.label.visibility = View.VISIBLE
-            } else {
-                view.label.visibility = View.GONE
-            }
         }
     }
 

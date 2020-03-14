@@ -2,6 +2,7 @@ package com.example.books
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -39,7 +40,20 @@ class MainActivity : AppCompatActivity() {
     private fun openSettings() {
         supportFragmentManager?.let {
             val fragment = EditFragment()
-            it.beginTransaction().setCustomAnimations(R.anim.enter_from_left, R.anim.exit_to_left).replace(R.id.mainContainer, fragment).addToBackStack("abcde").commit()
+            if(supportFragmentManager.findFragmentById(R.id.container) != null) {
+                Log.i("supertest123","fragment removed")
+                supportFragmentManager
+                    .beginTransaction()
+                    .setCustomAnimations(R.anim.enter_from_left, R.anim.exit_to_left)
+                    .remove(supportFragmentManager.findFragmentByTag("fragment")!!).commit();
+            } else {
+                Log.i("supertest123","fragment added")
+                supportFragmentManager
+                    .beginTransaction()
+                    .setCustomAnimations(R.anim.enter_from_left, R.anim.exit_to_left)
+                    .replace(R.id.container, fragment, "fragment")
+                    .commit();
+            }
         }
     }
 }

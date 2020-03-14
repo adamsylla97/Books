@@ -72,8 +72,8 @@ class AddBookFragment : DialogFragment() {
         if(!types.contains("adventure")) {
             types.add("adventure")
         }
-        val newBook = Book(oldBook.title, types, oldBook.bookId)
-        db.booksDao().updateBook(newBook)
+        val newBook = Book(oldBook.title, types)
+        db.booksDao().insertBook(newBook)
         sharedViewModel.updateBooksFromCategory()
     }
 
