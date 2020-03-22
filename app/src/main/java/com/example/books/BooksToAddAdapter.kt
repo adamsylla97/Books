@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.books.db.Book
 import kotlinx.android.synthetic.main.add_book_item.view.*
 
-class BooksToAddAdapter(val onClick: (Book) -> Unit) : RecyclerView.Adapter<BooksToAddAdapter.BooksHolder>() {
+class BooksToAddAdapter(val onClick: (Boolean, Book) -> Unit) : RecyclerView.Adapter<BooksToAddAdapter.BooksHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BooksHolder {
         val inflatedView = LayoutInflater.from(parent.context).inflate(R.layout.add_book_item, parent, false)
         return BooksHolder(inflatedView, onClick)
@@ -30,12 +30,15 @@ class BooksToAddAdapter(val onClick: (Book) -> Unit) : RecyclerView.Adapter<Book
         holder.bind(books[position])
     }
 
-    class BooksHolder(val view: View, val onClick: (Book) -> Unit) : RecyclerView.ViewHolder(view) {
+    class BooksHolder(val view: View, val onClick: (Boolean, Book) -> Unit) : RecyclerView.ViewHolder(view) {
 
         fun bind(book: Book) {
             view.bookTitle.text = book.title
-            view.addItem.setOnClickListener {
-                onClick(book)
+            view.addBookEnd.setOnClickListener {
+                onClick(false, book)
+            }
+            view.addBookNext.setOnClickListener {
+                onClick(true, book)
             }
         }
     }

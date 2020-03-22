@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
         db.booksDao().clearDatabase()
         val books: List<Book> = listOf(Book("book", types), Book("ksiazka", types), Book("aaa", types2))
         db.booksDao().insertBook(books[0], books[1], books[2])
+        Log.i("supertest123 start", db.booksDao().getAllSavedBooks().toString())
         //mockowe uzupelnienie bazy danych, w przypadku normalnej implementacji zczytanie wartosci z bazy powinno byc zastapione normalna implementacja
 
     }
