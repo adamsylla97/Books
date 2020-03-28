@@ -148,6 +148,7 @@
             android:layout_marginEnd="10dp"
             android:layout_marginBottom="10dp"
             app:layout_constraintTop_toBottomOf="@id/nastepnaLabel"
+            app:layout_constraintBottom_toTopOf="@id/saveButton"
             android:visibility="visible"
             tools:itemCount="4"
             tools:listitem="@layout/item" />

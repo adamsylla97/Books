@@ -6,10 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [Book::class], version = 1, exportSchema = false)
+@Database(entities = [Book::class, Category::class], version = 1, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class BooksDB: RoomDatabase(){
     abstract fun booksDao(): BooksDao
+    abstract fun categoryDao(): CategoryDao
 
     companion object {
         var booksdb: BooksDB? = null

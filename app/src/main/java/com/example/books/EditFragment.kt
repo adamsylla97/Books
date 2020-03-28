@@ -235,6 +235,10 @@ class EditFragment : Fragment() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        viewModel.updateDataBase()
+    }
 
     //metoda odpowiedzialna za przenoszenie itemow w recycler view
     private fun prepareRecyclerView() {
@@ -253,6 +257,7 @@ class EditFragment : Fragment() {
             }
 
             override fun onSwiped(viewHolder: ViewHolder, direction: Int) {
+
             }
         })
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.books.db.Book
 import com.example.books.db.BooksDB
+import com.example.books.db.Category
 
 class EditBookViewModel(private val category: String): ViewModel() {
 
@@ -21,15 +22,11 @@ class EditBookViewModel(private val category: String): ViewModel() {
     private fun getAdventureBooks(): List<Book> {
         val books = db.booksDao().getAllSavedBooks()
         val wantedBooks = books.filter { it.types.contains(category) }
-        return wantedBooks
+        val cat: Category? = db.categoryDao().getSpecificCategory(category)
+        return cat?.categoryBooks ?: wantedBooks
     }
 
-    fun updateBooks() {
-        categoryBooks.value = getAdventureBooks().toMutableList()
-        allBooks.value = db.booksDao().getAllSavedBooks()
-    }
-
-    private fun updateDataBase() {
+    fun updateDataBase() {
         val dataBaseBooks = allBooks.value?.toMutableList() ?: mutableListOf()
         val categoryBooks = categoryBooks.value ?: mutableListOf()
         dataBaseBooks.forEach { dbBook ->
@@ -53,6 +50,16 @@ class EditBookViewModel(private val category: String): ViewModel() {
                 }
             }
         }
+
+        val cat: Category? = db.categoryDao().getSpecificCategory(category)
+        if(cat == null) {
+            val newCategory = Category(category, categoryBooks.toList())
+            db.categoryDao().insertCategory(newCategory)
+        } else {
+            val updatedCategory = Category(cat.categoryName, categoryBooks.toList(), cat.categoryId)
+            db.categoryDao().updateCategory(updatedCategory)
+        }
+
     }
 
     override fun onCleared() {
