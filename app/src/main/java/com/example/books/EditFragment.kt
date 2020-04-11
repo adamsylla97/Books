@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,9 +32,9 @@ class EditFragment : Fragment() {
     private val addBookAdapter = BooksToAddAdapter { flag, book ->
         onAddClickButton(flag, book)
     }
-    private val viewModel = EditBookViewModel(category)
+    private val historyAdapter: HistoryAdapter = HistoryAdapter()
+    private val viewModelEditBook = EditBookViewModel(category)
     private val db = BooksDB.booksdb!!
-    private val removedBooks = mutableListOf<Book>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,7 +46,10 @@ class EditFragment : Fragment() {
             R.layout.fragment_edit,
             container,
             false
-        ).root
+        ).apply {
+            lifecycleOwner = this@EditFragment
+            viewModel = viewModelEditBook
+        }.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -60,6 +64,10 @@ class EditFragment : Fragment() {
         booksToAdd.apply {
             layoutManager = LinearLayoutManager(this@EditFragment.context)
             adapter = addBookAdapter
+        }
+        history.apply {
+            layoutManager = LinearLayoutManager(this@EditFragment.context)
+            adapter = historyAdapter
         }
         prepareRecyclerView()
 
@@ -79,9 +87,17 @@ class EditFragment : Fragment() {
             onNextButtonClicked()
         }
 
+        viewModelEditBook.isHistoryVisible.observe(this, Observer{
+            if(it) {
+                historyButton.background = resources.getDrawable(R.drawable.yellow_bordered_button)
+            } else {
+                historyButton.background = resources.getDrawable(R.drawable.default_bordered_button)
+            }
+        })
+
         var list = listOf<Book>()
 
-        viewModel.categoryBooks.observe(this, androidx.lifecycle.Observer {
+        viewModelEditBook.categoryBooks.observe(this, androidx.lifecycle.Observer {
             itemAdapter.addList(it ?: emptyList())
             try{
                 obecnieCzytana.text = "Obecnie czytana: " + it[0].title
@@ -97,9 +113,12 @@ class EditFragment : Fragment() {
             list = it
         })
 
-        viewModel.allBooks.observe(this, androidx.lifecycle.Observer {
+        viewModelEditBook.allBooks.observe(this, androidx.lifecycle.Observer {
             addBookAdapter.addList(it ?: emptyList())
-            Log.i("supertest123", it.toString())
+        })
+
+        viewModelEditBook.removedBooks.observe(this, Observer {
+            historyAdapter.addList(it)
         })
 
         searchBook.addTextChangedListener(object : TextWatcher{
@@ -143,14 +162,13 @@ class EditFragment : Fragment() {
 
     private fun onPreviousButtonClicked() {
         try{
-            if(removedBooks.size == 0) {
+            if(viewModelEditBook.removedBooks.value?.size ?: 0 == 0) {
                 displayInfo("Brak przewiniętych książek.")
             } else {
-                val previousBook = removedBooks[removedBooks.size-1]
-                removedBooks.removeAt(removedBooks.size-1)
-                viewModel.categoryBooks.value?.add(0,previousBook)
-                Log.i("supertest123", viewModel.categoryBooks.value.toString())
-                itemAdapter.addList(viewModel.categoryBooks.value ?: emptyList())
+                val previousBook = viewModelEditBook.removeLastFromRemovedBooks()
+                viewModelEditBook.categoryBooks.value?.add(0,previousBook)
+                Log.i("supertest123", viewModelEditBook.categoryBooks.value.toString())
+                itemAdapter.addList(viewModelEditBook.categoryBooks.value ?: emptyList())
                 try{
                     obecnieCzytana.text = "Obecnie czytana: " + itemAdapter.items[0].title
                 } catch (e: Exception) {
@@ -170,13 +188,15 @@ class EditFragment : Fragment() {
 
     private fun onNextButtonClicked() {
         try{
-            if(viewModel.categoryBooks.value?.isEmpty() ?: true) {
+            if(viewModelEditBook.categoryBooks.value?.isEmpty() ?: true) {
                 displayInfo("Brak ksiazek w kolejce.")
             } else {
-                val a: Book? = viewModel.categoryBooks.value?.removeAt(0)
-                Log.i("supertest123", viewModel.categoryBooks.value.toString())
-                itemAdapter.addList(viewModel.categoryBooks.value ?: emptyList())
-                removedBooks.add(a!!)
+                val a: Book? = viewModelEditBook.categoryBooks.value?.removeAt(0)
+                Log.i("supertest123", viewModelEditBook.categoryBooks.value.toString())
+                itemAdapter.addList(viewModelEditBook.categoryBooks.value ?: emptyList())
+                viewModelEditBook.addToRemovedBooks(a!!)
+                Log.i("supertest123", "aaa")
+                Log.i("supertest123", viewModelEditBook.removedBooks.value.toString())
                 try{
                     obecnieCzytana.text = "Obecnie czytana: " + itemAdapter.items[0].title
                 } catch (e: Exception) {
@@ -199,32 +219,32 @@ class EditFragment : Fragment() {
     }
 
     private fun onDeleteClickButton(book: Book) {
-        val categoryBooks: MutableList<Book> = viewModel.categoryBooks.value?.toMutableList() ?: mutableListOf()
+        val categoryBooks: MutableList<Book> = viewModelEditBook.categoryBooks.value?.toMutableList() ?: mutableListOf()
         categoryBooks.remove(book)
-        viewModel.categoryBooks.value = categoryBooks
+        viewModelEditBook.categoryBooks.value = categoryBooks
 
     }
 
     private fun onAddClickButton(addAsNext: Boolean, book: Book) {
         if(addAsNext) {
-            val currentCategoryBooks: MutableList<Book> = viewModel.categoryBooks.value?.toMutableList() ?: mutableListOf()
+            val currentCategoryBooks: MutableList<Book> = viewModelEditBook.categoryBooks.value?.toMutableList() ?: mutableListOf()
             try {
                 currentCategoryBooks.add(1, book)
             } catch (e: Exception) {
                 currentCategoryBooks.add(book)
             }
-            viewModel.categoryBooks.value = currentCategoryBooks
+            viewModelEditBook.categoryBooks.value = currentCategoryBooks
         } else {
-            val currentCategoryBooks: MutableList<Book> = viewModel.categoryBooks.value?.toMutableList() ?: mutableListOf()
+            val currentCategoryBooks: MutableList<Book> = viewModelEditBook.categoryBooks.value?.toMutableList() ?: mutableListOf()
             currentCategoryBooks.add(book)
-            viewModel.categoryBooks.value = currentCategoryBooks
+            viewModelEditBook.categoryBooks.value = currentCategoryBooks
         }
 
         searchBook.text.clear()
     }
 
     private fun onSearch(value: String) {
-        val books = viewModel.allBooks.value ?: emptyList()
+        val books = viewModelEditBook.allBooks.value ?: emptyList()
         if(value.isNotEmpty()) {
             val a = books.filter {
                 it.title.contains(value.toLowerCase())
@@ -237,7 +257,7 @@ class EditFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        viewModel.updateDataBase()
+        viewModelEditBook.updateDataBase()
     }
 
     //metoda odpowiedzialna za przenoszenie itemow w recycler view

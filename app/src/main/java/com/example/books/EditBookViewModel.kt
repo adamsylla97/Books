@@ -1,7 +1,9 @@
 package com.example.books
 
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import com.example.books.db.Book
 import com.example.books.db.BooksDB
@@ -11,12 +13,54 @@ class EditBookViewModel(private val category: String): ViewModel() {
 
     val db = BooksDB.booksdb!!
 
+    val removedBooks = MutableLiveData<MutableList<Book>>().apply {
+        value = mutableListOf()
+    }
+
     val allBooks = MutableLiveData<List<Book>>().apply {
         value = db.booksDao().getAllSavedBooks()
     }
 
     val categoryBooks = MutableLiveData<MutableList<Book>>().apply {
         value = getAdventureBooks().toMutableList()
+    }
+
+    private val _isHistoryVisible: MutableLiveData<Boolean> = MutableLiveData<Boolean>().apply {
+        value = false
+    }
+
+    val historyButtonText = Transformations.map(_isHistoryVisible) {
+        if(_isHistoryVisible.value == true) {
+            "Zwiń historię"
+        } else {
+            "Wczytaj poprzednie"
+        }
+    }
+
+    val isHistoryVisible: LiveData<Boolean> = _isHistoryVisible
+
+    val historyTextVisible: LiveData<Boolean> = Transformations.map(removedBooks) {
+        it.isEmpty()
+    }
+
+    fun addToRemovedBooks(book: Book) {
+        val prev = removedBooks.value ?: mutableListOf()
+        prev.add(book)
+        removedBooks.value = prev
+    }
+
+    fun removeLastFromRemovedBooks(): Book {
+        val prev = removedBooks.value ?: mutableListOf()
+        val a = prev.removeAt(prev.size - 1)
+        removedBooks.value = prev
+        return a
+    }
+
+    fun changeVisibility() {
+        val current = _isHistoryVisible.value ?: true
+        Log.i("supertest123", "Aaa")
+        Log.i("supertest123", current.toString())
+        _isHistoryVisible.value = !current
     }
 
     private fun getAdventureBooks(): List<Book> {
